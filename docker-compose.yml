@@ -37,5 +37,19 @@ services:
     volumes:
       - kafka_data:/bitnami/kafka/data
 
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=secret
+      - MYSQL_USER=debezium
+      - MYSQL_PASSWORD=dbz
+      - MYSQL_DATABASE=inventory
+    volumes:
+      # Initialize the db
+      - ./infra/mysql:/docker-entrypoint-initdb.d
+
 volumes:
   kafka_data:
