@@ -50,6 +50,12 @@ services:
     volumes:
       # Initialize the db
       - ./infra/mysql:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-psecret" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   connect:
     image: debezium/connect:1.9
@@ -58,7 +64,7 @@ services:
       kafka:
         condition: service_healthy
       mysql:
-        condition: service_started
+        condition: service_healthy
     ports:
       - "8083:8083"
     environment:
