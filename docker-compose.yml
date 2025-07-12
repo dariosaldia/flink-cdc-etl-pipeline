@@ -51,5 +51,52 @@ services:
       # Initialize the db
       - ./infra/mysql:/docker-entrypoint-initdb.d
 
+  connect:
+    image: debezium/connect:1.9
+    container_name: connect
+    depends_on:
+      kafka:
+        condition: service_healthy
+      mysql:
+        condition: service_started
+    ports:
+      - "8083:8083"
+    environment:
+      - BOOTSTRAP_SERVERS=kafka:29092
+      - GROUP_ID=1
+      - CONFIG_STORAGE_TOPIC=my_connect_configs
+      - OFFSET_STORAGE_TOPIC=my_connect_offsets
+      - STATUS_STORAGE_TOPIC=my_connect_statuses
+      - KEY_CONVERTER=org.apache.kafka.connect.json.JsonConverter
+      - VALUE_CONVERTER=org.apache.kafka.connect.json.JsonConverter
+      - KEY_CONVERTER_SCHEMAS_ENABLE=false
+      - VALUE_CONVERTER_SCHEMAS_ENABLE=false
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8083/" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # A one-off helper that waits for Connect and registers the connector
+  connector-init:
+    image: curlimages/curl:7.85.0
+    depends_on:
+      connect:
+        condition: service_healthy
+    volumes:
+      - ./infra/connect/register-orders-connector.json:/register-orders-connector.json:ro
+    command: |
+      /bin/sh -c '
+        echo "Waiting for Kafka Connect to be ready…";
+        until curl -sf http://connect:8083/; do
+          echo "[init] still waiting…"; sleep 2;
+        done
+        echo "[init] Registering Debezium connector…";
+        curl -X POST -H "Content-Type: application/json" \
+             --data @/register-orders-connector.json \
+             http://connect:8083/connectors;
+        echo "[init] Connector registration attempted; exiting.";
+      '
+
 volumes:
   kafka_data:
