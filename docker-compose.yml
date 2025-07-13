@@ -58,7 +58,7 @@ services:
       start_period: 30s
 
   connect:
-    image: debezium/connect:1.9
+    image: debezium/connect:2.7.3.Final
     container_name: connect
     depends_on:
       kafka:
