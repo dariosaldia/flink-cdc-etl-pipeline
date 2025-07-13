@@ -112,5 +112,25 @@ services:
         fi
       '
 
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # Console UI
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "alias", "set", "local", "http://localhost:9000", "minioadmin", "minioadmin"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
 volumes:
   kafka_data:
+  minio_data:
