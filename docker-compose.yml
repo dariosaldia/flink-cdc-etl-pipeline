@@ -91,6 +91,7 @@ services:
         condition: service_healthy
     volumes:
       - ./infra/connect/register-orders-connector.json:/register-orders-connector.json:ro
+    restart: "no"
     command: |
       /bin/sh -c '
         echo "Waiting for Kafka Connect to be ready…";
@@ -101,7 +102,14 @@ services:
         curl -X POST -H "Content-Type: application/json" \
              --data @/register-orders-connector.json \
              http://connect:8083/connectors;
-        echo "[init] Connector registration attempted; exiting.";
+        echo "[init] verifying connector creation…";
+        if curl -sf -o /dev/null http://connect:8083/connectors/mysql-orders-connector; then
+          echo "[init] connector created successfully!";
+          exit 0;
+        else
+          echo "[init] ERROR: connector not found after registration"; 
+          exit 1;
+        fi
       '
 
 volumes:
