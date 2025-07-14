@@ -35,6 +35,7 @@ under the License.
 		<maven.compiler.source>${target.java.version}</maven.compiler.source>
 		<maven.compiler.target>${target.java.version}</maven.compiler.target>
 		<log4j.version>2.24.1</log4j.version>
+		<jackson.toml.version>2.19.1</jackson.toml.version>
 	</properties>
 
 	<repositories>
@@ -97,6 +98,12 @@ under the License.
 			<artifactId>log4j-core</artifactId>
 			<version>${log4j.version}</version>
 			<scope>runtime</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.fasterxml.jackson.dataformat</groupId>
+			<artifactId>jackson-dataformat-toml</artifactId>
+			<version>${jackson.toml.version}</version>
 		</dependency>
 	</dependencies>
 
