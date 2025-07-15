@@ -1,7 +1,12 @@
 package com.example.flinkcdc.config;
 
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Optional;
 
 public record FlinkConfig (
-  long checkpointingIntervalMs
+    long checkpointingIntervalMs,
+    long rolloverIntervalMs,
+    long inactivityIntervalMs,
+    long maxPartSizeBytes,
+    Optional<String> runMode,
+    Optional<Integer> uiPort
 ){}
