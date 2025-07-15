@@ -1,17 +1,14 @@
 package com.example.flinkcdc;
 
 import com.example.flinkcdc.config.AppConfig;
-import com.fasterxml.jackson.dataformat.toml.TomlMapper;
-import java.io.File;
+import com.example.flinkcdc.config.ConfigLoader;
 import java.io.IOException;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 public class OrdersCdcToParquetJob {
 
     public static void main(String[] args) throws IOException {
-        AppConfig appConfig = new TomlMapper()
-            .readerFor(AppConfig.class)
-            .readValue(new File("config.toml"));
+        AppConfig appConfig = ConfigLoader.load();
 
         System.out.println(appConfig);
 
