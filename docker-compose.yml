@@ -35,6 +35,30 @@ services:
     volumes:
       - kafka_data:/bitnami/kafka/data
 
+  kafka-init:
+    image: bitnami/kafka:latest
+    depends_on:
+      kafka:
+        condition: service_healthy
+    command: |
+      /bin/sh -c '
+        # create our CDC topic
+        /opt/bitnami/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 \
+          --create --if-not-exists \
+          --topic orders_cdc --partitions 2 --replication-factor 1;
+        
+        # create the schema history topic Debezium needs
+        /opt/bitnami/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 \
+          --create --if-not-exists \
+          --topic schema-changes.inventory --partitions 2 --replication-factor 1;
+        
+        # create the schema history topic Debezium needs
+        /opt/bitnami/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 \
+          --create --if-not-exists \
+          --topic dbserver1.inventory.orders --partitions 2 --replication-factor 1;
+      '
+
+
   mysql:
     image: mysql:8.0
     container_name: mysql
