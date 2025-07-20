@@ -26,8 +26,6 @@ services:
       - KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR=1
       - KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR=1
       - KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
-      # Automatically create the 'my_topic' topic with 3 partitions, RF=1
-#      - KAFKA_CREATE_TOPICS=my_topic:3:1
     healthcheck:
       test: [ "CMD", "kafka-broker-api-versions.sh", "--bootstrap-server", "localhost:9092" ]
       interval: 10s
