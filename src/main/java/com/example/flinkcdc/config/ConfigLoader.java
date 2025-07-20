@@ -3,6 +3,7 @@ package com.example.flinkcdc.config;
 import java.io.File;
 import java.io.IOException;
 import com.fasterxml.jackson.dataformat.toml.TomlMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 
 public class ConfigLoader {
 
@@ -22,6 +23,7 @@ public class ConfigLoader {
 
     // read and bind
     return mapper
+        .registerModule(new Jdk8Module()) // Needed so that Optional is parsable
         .readerFor(AppConfig.class)
         .readValue(new File(path));
   }
