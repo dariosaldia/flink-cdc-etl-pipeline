@@ -15,6 +15,11 @@
     "schema.history.internal.kafka.topic": "schema-changes.inventory",
     "include.schema.changes": "false",
     "database.allowPublicKeyRetrieval": "true",
-    "database.sslMode": "disabled"
+    "database.sslMode": "disabled",
+
+    "transforms": "route",
+    "transforms.route.type": "org.apache.kafka.connect.transforms.RegexRouter",
+    "transforms.route.regex": "dbserver1\\.inventory\\.orders",
+    "transforms.route.replacement": "orders_cdc"
   }
 }
