@@ -6,6 +6,6 @@ CREATE TABLE orders (
   order_date DATE NOT NULL
 );
 
--- add a sample row
-INSERT INTO orders (product_name, quantity, order_date)
-VALUES ('Sample Item', 1, CURDATE());
+GRANT RELOAD, LOCK TABLES, REPLICATION SLAVE, REPLICATION CLIENT
+  ON *.* TO 'debezium'@'%';
+FLUSH PRIVILEGES;
