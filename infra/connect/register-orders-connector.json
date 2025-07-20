@@ -11,8 +11,8 @@
     "topic.prefix": "dbserver1",
     "database.include.list": "inventory",
     "table.include.list": "inventory.orders",
-    "database.history.kafka.bootstrap.servers": "kafka:9092",
-    "database.history.kafka.topic": "schema-changes.inventory",
+    "schema.history.internal.kafka.bootstrap.servers": "kafka:29092",
+    "schema.history.internal.kafka.topic": "schema-changes.inventory",
     "include.schema.changes": "false",
     "database.allowPublicKeyRetrieval": "true",
     "database.sslMode": "disabled"
