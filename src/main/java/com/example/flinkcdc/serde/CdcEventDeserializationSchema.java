@@ -23,8 +23,14 @@ public class CdcEventDeserializationSchema implements KafkaRecordDeserialization
     @Override
     public void deserialize(ConsumerRecord<byte[], byte[]> record,
                             Collector<CdcEvent> out) throws IOException {
+        byte[] value = record.value();
+        if (value == null) {
+            // tombstone marker (delete event) — skip it
+            return;
+        }
+
         JsonNode payload = mapper
-                .readTree(record.value())
+                .readTree(value)
                 .get("payload");
 
         // bind the entire payload into our CdcEvent record

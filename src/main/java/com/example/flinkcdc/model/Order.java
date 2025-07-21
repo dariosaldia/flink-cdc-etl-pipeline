@@ -6,6 +6,5 @@ public record Order(
     int    orderId,
     String productName,
     int    quantity,
-    String orderDate,    // "YYYY-MM-DD"
-    long   processedAt   // epoch millis
+    String orderDate
 ) implements Serializable { }

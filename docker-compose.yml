@@ -1,4 +1,23 @@
 services:
+  app:
+    profiles:
+      - app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: flink-cdc-example:develop
+    depends_on:
+      kafka:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+    environment:
+      - CONFIG_FILE=/opt/flink/config.toml
+    volumes:
+      - ./docker.config.toml:/opt/flink/config.toml:ro
+
   kafka:
     image: bitnami/kafka:latest
     container_name: kafka
@@ -46,17 +65,8 @@ services:
         /opt/bitnami/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 \
           --create --if-not-exists \
           --topic orders_cdc --partitions 2 --replication-factor 1;
-        
-        # create the schema history topic Debezium needs
-        /opt/bitnami/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 \
-          --create --if-not-exists \
-          --topic schema-changes.inventory --partitions 2 --replication-factor 1;
-        
-        # create the schema history topic Debezium needs
-        /opt/bitnami/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 \
-          --create --if-not-exists \
-          --topic dbserver1.inventory.orders --partitions 2 --replication-factor 1;
       '
+
 
 
   mysql:
@@ -133,6 +143,8 @@ services:
           exit 1;
         fi
       '
+
+
 
   minio:
     image: minio/minio:latest

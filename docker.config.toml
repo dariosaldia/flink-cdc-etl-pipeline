@@ -2,15 +2,14 @@
 [flink]
 checkpointingIntervalMs = 20000 # 20s
 # how often (in ms) to roll a file, regardless of activity
-rolloverIntervalMs      = 10000  # 10s
+rolloverIntervalMs      = 1000  # 1s
 # how long (in ms) to wait with no new records before rolling
 inactivityIntervalMs    = 10000 # 10s
 # maximum size (in bytes) of a part file before rolling
-maxPartSizeBytes        = 1049000
-runMode                 = "local"
+maxPartSizeBytes        = 100
 
 [kafka]
-inBootstrapServers = "localhost:9092"
+inBootstrapServers = "kafka:29092"
 inTopics = "orders_cdc"
 inGroupId = "orders-cdc-gid"
 maxOutOfOrderSecs = 30

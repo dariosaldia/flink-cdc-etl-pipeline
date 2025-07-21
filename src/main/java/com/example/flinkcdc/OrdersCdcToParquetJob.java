@@ -6,7 +6,7 @@ import com.example.flinkcdc.model.CdcEvent;
 import com.example.flinkcdc.model.Order;
 import com.example.flinkcdc.serde.CdcEventDeserializationSchema;
 import com.example.flinkcdc.sink.CheckpointSizeTimeRollingPolicy;
-import com.example.flinkcdc.sink.OrderDateBucketAssigner;
+import com.example.flinkcdc.sink.OrderTimestampBucketAssigner;
 import java.time.Duration;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.configuration.Configuration;
@@ -18,6 +18,7 @@ import org.apache.flink.core.fs.Path;
 import org.apache.flink.formats.parquet.avro.AvroParquetWriters;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.sink.filesystem.bucketassigners.DateTimeBucketAssigner;
 
 public class OrdersCdcToParquetJob {
 
@@ -69,7 +70,7 @@ public class OrdersCdcToParquetJob {
             new Path(cfg.storage().outputPath()),
             AvroParquetWriters.forReflectRecord(Order.class)
         )
-        .withBucketAssigner(new OrderDateBucketAssigner())
+        .withBucketAssigner(new OrderTimestampBucketAssigner())
         .withRollingPolicy(new CheckpointSizeTimeRollingPolicy(cfg.flink().maxPartSizeBytes(),
             cfg.flink().rolloverIntervalMs(), cfg.flink().inactivityIntervalMs()))
         .build();
