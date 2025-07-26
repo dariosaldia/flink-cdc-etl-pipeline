@@ -10,33 +10,54 @@ import com.example.flinkcdc.sink.OrderTimestampBucketAssigner;
 import java.time.Duration;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.CoreOptions;
 import org.apache.flink.configuration.RestOptions;
 import org.apache.flink.connector.file.sink.FileSink;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
+import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.formats.parquet.avro.AvroParquetWriters;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.sink.filesystem.bucketassigners.DateTimeBucketAssigner;
 
 public class OrdersCdcToParquetJob {
 
   public static void main(String[] args) throws Exception {
     AppConfig cfg = ConfigLoader.load();
+    System.out.println(cfg);
 
-    StreamExecutionEnvironment env = cfg.flink().runMode()
-        .filter("local"::equalsIgnoreCase)
-        .map(__ -> cfg.flink().uiPort()
-            .map(port -> {
-              Configuration conf = new Configuration();
-              conf.set(RestOptions.PORT, port);
-              return StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(conf);
-            })
-            .orElseGet(() -> StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(
-                new Configuration()))
-        )
-        .orElseGet(StreamExecutionEnvironment::getExecutionEnvironment);
+    boolean isLocal = cfg.flink()
+        .runMode()
+        .map("local"::equalsIgnoreCase)
+        .orElse(false);
+
+    Configuration flinkConf = new Configuration();
+
+    StreamExecutionEnvironment env;
+    if (isLocal) {
+      cfg.flink()
+          .uiPort()
+          .ifPresent(port -> flinkConf.set(RestOptions.PORT, port));
+
+      cfg.flink()
+          .parallelismDefault()
+          .ifPresent(parallelism -> flinkConf.set(CoreOptions.DEFAULT_PARALLELISM, parallelism));
+
+      cfg.storage().s3().ifPresent(s3Config -> {
+        flinkConf.setString("s3.access-key", s3Config.s3AccessKey());
+        flinkConf.setString("s3.secret-key", s3Config.s3SecretKey());
+        flinkConf.setString("s3.endpoint", s3Config.s3Endpoint());
+        flinkConf.setString("s3.path.style.access", s3Config.s3PathStyleAccess());
+      });
+
+      FileSystem.initialize(flinkConf, null);
+
+      env = StreamExecutionEnvironment.createLocalEnvironment(flinkConf);
+    } else {
+      env = StreamExecutionEnvironment.getExecutionEnvironment(flinkConf);
+    }
+
     env.enableCheckpointing(cfg.flink().checkpointingIntervalMs());
 
     KafkaSource<CdcEvent> source = KafkaSource.<CdcEvent>builder()

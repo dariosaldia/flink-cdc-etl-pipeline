@@ -7,12 +7,20 @@ rolloverIntervalMs      = 1000  # 1s
 inactivityIntervalMs    = 10000 # 10s
 # maximum size (in bytes) of a part file before rolling
 maxPartSizeBytes        = 100
+runMode                 = "local"
+parallelismDefault      = 2
 
 [kafka]
 inBootstrapServers = "kafka:29092"
-inTopics = "orders_cdc"
-inGroupId = "orders-cdc-gid"
-maxOutOfOrderSecs = 30
+inTopics           = "orders_cdc"
+inGroupId          = "orders-cdc-gid"
+maxOutOfOrderSecs  = 30
 
 [storage]
-outputPath = "file:///tmp/orders"
+outputPath = "s3a://orders"
+
+[storage.s3]
+s3.endpoint          = "http://minio:9000"
+s3.path.style.access = true
+s3.access-key        = "minioadmin"
+s3.secret-key        = "minioadmin"

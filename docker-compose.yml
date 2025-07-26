@@ -67,8 +67,6 @@ services:
           --topic orders_cdc --partitions 2 --replication-factor 1;
       '
 
-
-
   mysql:
     image: mysql:8.0
     container_name: mysql
@@ -115,7 +113,6 @@ services:
       timeout: 5s
       retries: 10
 
-  # A one-off helper that waits for Connect and registers the connector
   connector-init:
     image: curlimages/curl:7.85.0
     depends_on:
@@ -142,9 +139,7 @@ services:
           echo "[init] ERROR: connector not found after registration"; 
           exit 1;
         fi
-      '
-
-
+      ' 
 
   minio:
     image: minio/minio:latest
@@ -159,11 +154,29 @@ services:
     volumes:
       - minio_data:/data
     healthcheck:
-      test: ["CMD", "mc", "alias", "set", "local", "http://localhost:9000", "minioadmin", "minioadmin"]
+      test: >
+        curl -f -s curl -f http://localhost:9000/minio/health/ready || exit 1
+      interval: 3s
+      retries: 10
+
+  minio-init:
+    image: minio/mc
+    container_name: minio-init
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set local http://minio:9000 minioadmin minioadmin;
+      /usr/bin/mc mb local/orders;
+      /usr/bin/mc anonymous set public local/orders;
+      sleep infinity
+      "
+    healthcheck:
+      test: [ "CMD", "/usr/bin/mc", "ls", "local/orders" ]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 10s
+    depends_on:
+      minio:
+        condition: service_healthy
 
 volumes:
   kafka_data:

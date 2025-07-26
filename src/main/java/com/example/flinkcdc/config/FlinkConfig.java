@@ -8,5 +8,6 @@ public record FlinkConfig (
     long inactivityIntervalMs,
     long maxPartSizeBytes,
     Optional<String> runMode,
-    Optional<Integer> uiPort
+    Optional<Integer> uiPort,
+    Optional<Integer> parallelismDefault
 ){}

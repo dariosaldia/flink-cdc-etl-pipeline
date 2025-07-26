@@ -8,12 +8,13 @@ inactivityIntervalMs    = 10000 # 10s
 # maximum size (in bytes) of a part file before rolling
 maxPartSizeBytes        = 1049000
 runMode                 = "local"
+parallelismDefault      = 2
 
 [kafka]
 inBootstrapServers = "localhost:9092"
-inTopics = "orders_cdc"
-inGroupId = "orders-cdc-gid"
-maxOutOfOrderSecs = 30
+inTopics           = "orders_cdc"
+inGroupId          = "orders-cdc-gid"
+maxOutOfOrderSecs  = 30
 
 [storage]
 outputPath = "file:///tmp/orders"
