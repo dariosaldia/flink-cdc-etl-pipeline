@@ -3,6 +3,7 @@ package com.example.flinkcdc.pipeline;
 import com.example.flinkcdc.config.AppConfig;
 import com.example.flinkcdc.model.CdcEvent;
 import com.example.flinkcdc.model.Order;
+import com.example.flinkcdc.monitoring.OrderMetricMapper;
 import com.example.flinkcdc.serde.CdcEventDeserializationSchema;
 import com.example.flinkcdc.sink.CheckpointSizeTimeRollingPolicy;
 import com.example.flinkcdc.sink.OrderTimestampBucketAssigner;
@@ -41,7 +42,8 @@ public class OrdersPipeline {
     public static DataStream<Order> transform(DataStream<CdcEvent> raw) {
         return raw
                 .filter(OrdersPipeline::isUpsert)
-                .map(OrdersPipeline::toOrder);
+                .map(OrdersPipeline::toOrder)
+                .map(new OrderMetricMapper());
     }
 
     public static FileSink<Order> createSink(AppConfig cfg) {

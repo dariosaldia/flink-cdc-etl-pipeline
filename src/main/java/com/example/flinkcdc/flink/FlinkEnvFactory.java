@@ -3,6 +3,7 @@ package com.example.flinkcdc.flink;
 import com.example.flinkcdc.config.AppConfig;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.CoreOptions;
+import org.apache.flink.configuration.GlobalConfiguration;
 import org.apache.flink.configuration.RestOptions;
 import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -18,15 +19,15 @@ public final class FlinkEnvFactory {
                 .map("local"::equalsIgnoreCase)
                 .orElse(false);
 
-        Configuration flinkConf = new Configuration();
-
         StreamExecutionEnvironment env;
         if (isLocal) {
+            Configuration flinkConf = new Configuration();
             applyLocalSettings(cfg, flinkConf);
-            FileSystem.initialize(flinkConf, null);
-            env = StreamExecutionEnvironment.createLocalEnvironment(flinkConf);
+            Configuration globalFlinkConf = GlobalConfiguration.loadConfiguration(flinkConf);
+            FileSystem.initialize(globalFlinkConf, null);
+            env = StreamExecutionEnvironment.createLocalEnvironment(globalFlinkConf);
         } else {
-            env = StreamExecutionEnvironment.getExecutionEnvironment(flinkConf);
+            env = StreamExecutionEnvironment.getExecutionEnvironment();
         }
 
         env.enableCheckpointing(cfg.flink().checkpointingIntervalMs());

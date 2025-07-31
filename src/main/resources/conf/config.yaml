@@ -1,0 +1,8 @@
+metrics:
+  reporters: prom
+  reporter:
+    prom:
+      factory:
+        class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
+      port: 9249        # port Flink will expose metrics on
+      host: 0.0.0.0     # bind to all interfaces
