@@ -18,3 +18,7 @@ maxOutOfOrderSecs  = 30
 
 [storage]
 outputPath = "file:///tmp/orders"
+
+[order]
+[order.stats]
+windowSizeMs = 60000 # 1m

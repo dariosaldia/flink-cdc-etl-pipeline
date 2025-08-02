@@ -3,7 +3,10 @@ package com.example.flinkcdc.pipeline;
 import com.example.flinkcdc.config.AppConfig;
 import com.example.flinkcdc.model.CdcEvent;
 import com.example.flinkcdc.model.Order;
+import com.example.flinkcdc.model.stats.OrderStats;
 import com.example.flinkcdc.monitoring.OrderMetricMapper;
+import com.example.flinkcdc.pipeline.aggregate.OrderStatsAggregator;
+import com.example.flinkcdc.pipeline.aggregate.OrderStatsWindowFunction;
 import com.example.flinkcdc.serde.CdcEventDeserializationSchema;
 import com.example.flinkcdc.sink.CheckpointSizeTimeRollingPolicy;
 import com.example.flinkcdc.sink.OrderTimestampBucketAssigner;
@@ -15,8 +18,10 @@ import org.apache.flink.core.fs.Path;
 import org.apache.flink.formats.parquet.avro.AvroParquetWriters;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows;
 
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 
 public class OrdersPipeline {
     public static KafkaSource<CdcEvent> createSource(AppConfig cfg) {
@@ -59,8 +64,22 @@ public class OrdersPipeline {
                 .build();
     }
 
+    public static DataStream<OrderStats> aggregateWindowByProductId(
+            DataStream<Order> orders,
+            Duration windowSize
+    ) {
+        return orders
+                .keyBy(Order::productId)
+                .window(TumblingProcessingTimeWindows.of(Duration.of(windowSize.toMillis(), ChronoUnit.MILLIS)))
+                .aggregate(
+                        new OrderStatsAggregator(),
+                        new OrderStatsWindowFunction()
+                );
+    }
+
     public static void build(StreamExecutionEnvironment env, AppConfig cfg) {
         DataStream<Order> orders = transform(rawStream(env, cfg));
+        DataStream<OrderStats> stats = aggregateWindowByProductId(orders, Duration.ofMillis(cfg.order().stats().windowSizeMs()));
         orders.sinkTo(createSink(cfg));
     }
 
