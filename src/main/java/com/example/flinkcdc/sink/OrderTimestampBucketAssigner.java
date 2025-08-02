@@ -1,10 +1,11 @@
 package com.example.flinkcdc.sink;
 
 import com.example.flinkcdc.model.Order;
+import org.apache.flink.streaming.api.functions.sink.filesystem.bucketassigners.DateTimeBucketAssigner;
+
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import org.apache.flink.streaming.api.functions.sink.filesystem.bucketassigners.DateTimeBucketAssigner;
 
 public class OrderTimestampBucketAssigner extends DateTimeBucketAssigner<Order> {
 

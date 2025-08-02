@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Default rate (changes per second)
+# simulate-db-changes.sh
+# Usage: ./simulate-db-changes.sh [-r RATE]
+# Generates insert/update/delete operations against the 'orders' table
+# in the MySQL 'inventory' DB via CDC.
+
+# Default rate: changes per second
 RATE="${RATE:-1}"
 
-# parse -r|--rate
+# Parse arguments
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -r|--rate)
@@ -18,52 +23,58 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# Validate RATE is positive number
-if ! awk "BEGIN{exit !($RATE > 0)}"; then
-  echo "ERROR: rate must be > 0: got '$RATE'"
+# Ensure RATE > 0 (portable)
+if ! awk -v r="$RATE" 'BEGIN { exit (r > 0 ? 0 : 1) }'; then
+  echo "ERROR: rate must be > 0, got '$RATE'"
   exit 1
 fi
 
-# Compute sleep interval = 1/RATE, to 3 decimal places
-INTERVAL=$(awk "BEGIN{printf \"%.3f\", 1/$RATE}")
+# Calculate sleep interval = 1/RATE, to 3 decimal places (portable)
+INTERVAL=$(awk -v r="$RATE" 'BEGIN { printf "%.3f", 1/r }')
 
-# MySQL container & creds
+echo "[Sim] Rate=${RATE} changes/sec => interval=${INTERVAL}s"
+
+# MySQL connection settings
 MYSQL_CONTAINER="mysql"
 DB_NAME="inventory"
 DB_USER="debezium"
 DB_PASS="dbz"
 
-PRODUCTS=(Widget Gadget Thingamajig Doohickey)
+# List of product IDs
+PRODUCT_IDS=(1 2 3 4 5)
 
 i=1
-echo "[Sim] Starting with RATE=${RATE} changes/sec (interval=${INTERVAL}s)"
 while true; do
-  # INSERT
-  PROD="${PRODUCTS[RANDOM % ${#PRODUCTS[@]}]}"
-  QTY=$((RANDOM % 5 + 1))
-  DATE=$(date +%F)
-  docker exec -i "$MYSQL_CONTAINER" \
-    mysql -u "$DB_USER" -p"$DB_PASS" -D "$DB_NAME" \
-    -e "INSERT INTO orders (product_name,quantity,order_date) VALUES ('$PROD',$QTY,'$DATE');"
-  echo "[Sim] Inserted #$i (${PROD}×${QTY} @ ${DATE})"
+  # Select random product ID and quantity
+  PROD_ID=${PRODUCT_IDS[RANDOM % ${#PRODUCT_IDS[@]}]}
+  QTY=$(( (RANDOM % 5) + 1 ))
+  DATE=$(date +"%Y-%m-%d %H:%M:%S")
 
-  # UPDATE every 3
+  # INSERT
+  docker exec -i "$MYSQL_CONTAINER" \
+    mysql -u"$DB_USER" -p"$DB_PASS" -D"$DB_NAME" \
+    -e "INSERT INTO orders (product_id, quantity, order_date) \
+        VALUES ($PROD_ID, $QTY, '$DATE');"
+  echo "[Sim][INSERT] #$i -> productId=${PROD_ID}, qty=${QTY}, date='${DATE}'"
+
+  # UPDATE every 3rd change
   if (( i % 3 == 0 )); then
-    ID=$((RANDOM % i + 1))
-    NEWQTY=$((RANDOM % 5 + 1))
+    ID=$(( (RANDOM % i) + 1 ))
+    NEW_QTY=$(( (RANDOM % 5) + 1 ))
     docker exec -i "$MYSQL_CONTAINER" \
       mysql -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" \
-      -e "UPDATE orders SET quantity=$NEWQTY WHERE order_id=$ID;"
-    echo "[Sim] Updated #$ID → qty=$NEWQTY"
+      -e "UPDATE orders SET quantity=$NEW_QTY \
+          WHERE order_id=$ID;"
+    echo "[Sim][UPDATE] #$i order_id=${ID} -> new_qty=${NEW_QTY}"
   fi
 
-  # DELETE every 5
+  # DELETE every 5th change
   if (( i % 5 == 0 )); then
-    ID=$((RANDOM % i + 1))
+    ID=$(( (RANDOM % i) + 1 ))
     docker exec -i "$MYSQL_CONTAINER" \
       mysql -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" \
       -e "DELETE FROM orders WHERE order_id=$ID;"
-    echo "[Sim] Deleted #$ID"
+    echo "[Sim][DELETE] #$i -> order_id=${ID}"
   fi
 
   ((i++))

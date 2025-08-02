@@ -1,7 +1,7 @@
 -- create the orders table in the inventory DB
 CREATE TABLE orders (
   order_id INT AUTO_INCREMENT PRIMARY KEY,
-  product_name VARCHAR(255) NOT NULL,
+  product_id INT NOT NULL,
   quantity INT NOT NULL,
   order_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
